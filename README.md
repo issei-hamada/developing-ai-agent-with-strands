@@ -1,8 +1,22 @@
 # developing-ai-agent-with-strands
 
 AgentCore と Strands Agents を使って AI エージェントを作成するワークショップ用リポジトリです。
+以下の2つのコンテンツを含んでいます。
 
-## 概要
+## 1. code-server 構築用 AWS CDK
+
+ワークショップに必要な環境を構築する CDK コードです。
+任意の台数の EC2 インスタンスと、必要に応じて RocketChat インスタンスを立ち上げます。
+
+## 2. ワークショップの解説ドキュメント
+
+本プロファイルのメインとなる、ワークショップです。
+
+1. Python開発環境の構築
+2. StrandsAgentsを使ってAIエージェントを開発する
+3. AgentCoreを使ってAIエージェントをデプロイする
+
+## ワークショップ概要
 
 このプロジェクトでは、Strands Agents フレームワークを使用して AI エージェントを構築し、Amazon Bedrock の AgentCore を使ってデプロイする方法を学習します。実践的な例として、気象庁 API を活用した天気予報士エージェントの実装を通じて、以下の技術を習得できます：
 
