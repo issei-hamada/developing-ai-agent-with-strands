@@ -10,9 +10,22 @@ AgentCore に関わるライブラリをインストール。
 uv add bedrock-agentcore bedrock-agentcore-starter-toolkit
 ```
 
+### main.py をリネームする
+
+main.py を、weather_reporter_xxxxxx.py にリネームする。
+
+※ xxxxxx には、ローマ字姓名(例:isseihamada)を入れて下さい。
+
+```sh
+mv main.py weather_reporter_xxxxxx.py
+```
+
+エージェントをデプロイする際、ファイル名がそのままエージェント名になります。
+ワークショップ参加者間で重複を避ける為、自分の姓名を入れています。
+
 ### 天気予報士エージェントを AgentCore 対応に書き換える
 
-以下を main.py にコピーペーストする。4か所変わっている。
+以下を weather_reporter_xxxxxx.py にコピーペーストする。4か所変わっている。
 
 ```py
 import argparse
@@ -140,7 +153,7 @@ if __name__ == "__main__":
 以下コマンドを実行すると、8080ポートで web サーバが起動する。
 
 ```sh
-uv run main.py
+uv run weather_reporter_xxxxxx.py
 ```
 
 戻り値は何もないが、問題なし。
@@ -163,15 +176,15 @@ curl 実行側のターミナルに、レスポンスが返ってくるはず。
 
 以下コマンドを実行し、必要な設定ファイルを作成する。
 
-※ エージェント名は重複出来ない為、複数名で実施している場合は各々が一意の名前にする事
+※ エージェント名は重複出来ない
 
 ```sh
-agentcore configure -e main.py
+agentcore configure -e weather_reporter_xxxxxx.py
 
 # 対話式で各種リソースを作成する(今回は全てデフォルトでOK)
 Configuring Bedrock AgentCore...
-Entrypoint parsed: file=/home/ubuntu/sample-agent/main.py, bedrock_agentcore_name=main
-Agent name: main
+Entrypoint parsed: file=/home/ubuntu/sample-agent/weather_reporter_xxxxxx.py, bedrock_agentcore_name=weather_reporter_xxxxxx.py
+Agent name: weather_reporter_xxxxxx.py
 
 🔐 Execution Role
 Press Enter to auto-create execution role, or provide execution role ARN/name to use existing

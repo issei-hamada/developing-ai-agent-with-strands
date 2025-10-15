@@ -64,8 +64,17 @@ npm install
 # Build TypeScript
 npm run build
 
+# Bootstrap CDK (first time only)
+cdk bootstrap
+
 # Deploy workshop infrastructure
 cdk deploy
+
+# Get instance information after deployment
+aws cloudformation describe-stacks --stack-name WorkshopStack --query 'Stacks[0].Outputs'
+
+# Retrieve code-server password for an instance
+aws ssm get-parameter --name "/workshop/code-server/<instance-id>/password" --with-decryption --query Parameter.Value --output text
 
 # Destroy infrastructure
 cdk destroy
@@ -130,11 +139,18 @@ The app runs as a web server on port 8080, accepting POST requests to `/invocati
 
 ### Workshop Infrastructure (code-server/)
 
-AWS CDK stack that deploys 25 EC2 instances with code-server (web-based VS Code):
-- Each instance pre-configured with AWS CLI, SAM CLI, Docker, Python, Node.js
-- Accessible via HTTPS on port 50443
-- Passwords stored in SSM Parameter Store
-- Shared VPC and CloudFormation execution role
+AWS CDK stack that deploys multiple EC2 instances with code-server (web-based VS Code):
+- Default configuration: 3 instances (configurable in `lib/workshop-stack.ts:22`)
+- Each instance pre-configured with:
+  - code-server (browser-based VS Code) on port 50443
+  - Python 3 + uv package manager
+  - Node.js + npm
+  - AWS CLI v2, SAM CLI, Amazon Q Developer for CLI
+  - Docker
+- Shared VPC (10.0.0.0/16, 3 AZs) and workshop IAM role
+- Individual per-instance: Security groups, SSH keypairs, passwords (all in SSM)
+- Passwords: SSM Parameter Store at `/workshop/code-server/<instance-id>/password`
+- SSH keys: SSM Parameter Store at `/ec2/keypair/<key-pair-id>`
 - Used for hands-on workshop environments
 
 ## Important Implementation Details
@@ -187,7 +203,7 @@ Include these elements in system prompts:
 
 ```
 .
-├── docs/                          # Workshop documentation (Japanese)
+├── workshop/                      # Workshop documentation (Japanese)
 │   ├── 01_Python開発環境の構築.md    # Setting up Python with uv
 │   ├── 02_StrandsAgentsを使ってAIエージェントを開発する.md  # Agent development
 │   └── 03_AgentCoreを使ってAIエージェントをデプロイする.md   # AgentCore deployment
@@ -195,7 +211,14 @@ Include these elements in system prompts:
 │   └── weather_forecast.py        # JMA weather API tool
 └── code-server/                   # Workshop infrastructure (CDK)
     ├── lib/constructs/            # CDK constructs
+    │   ├── vpc.ts                # VPC setup
+    │   ├── codeServer.ts         # EC2 instance with code-server
+    │   ├── instance-role.ts      # IAM role with workshop permissions
+    │   └── rocketChat.ts         # Optional Rocket.Chat instance
     ├── lib/config/                # Configuration
+    │   ├── network.ts            # VPC/network settings
+    │   └── instance.ts           # EC2 instance settings
+    ├── lib/workshop-stack.ts      # Main CDK stack
     └── bin/workshop.ts            # CDK app entry point
 ```
 
@@ -265,3 +288,36 @@ system_prompt = BASE_PROMPT + f"""
 現在の時刻: {datetime.now()}
 """
 ```
+
+## Workflow Customization
+
+### Adjusting Number of EC2 Instances
+
+Edit `code-server/lib/workshop-stack.ts:22`:
+
+```typescript
+for (let i = 1; i <= 10; i++) {  // Change 3 to desired number
+```
+
+### Modifying IAM Permissions for Different Workshops
+
+Edit `code-server/lib/constructs/instance-role.ts` to add/remove IAM policies based on workshop requirements. Current permissions support:
+
+- Amazon Bedrock (InvokeModel, etc.)
+- AgentCore deployment and execution
+- SAM/CloudFormation deployments
+- Lambda, ECR, S3, SSM, CodeBuild
+
+### Enabling Rocket.Chat (Optional)
+
+Uncomment lines in `code-server/lib/workshop-stack.ts:34-39` and redeploy:
+
+```typescript
+const rocketChat = new RocketChat(this, 'RocketChat', {
+  vpc: vpc.vpc,
+  config: instanceConfig.RocketChat,
+  instanceRole: workshopRole.role
+});
+```
+
+Access at `http://<instance-ip>:3000`. See `code-server/README.md` for setup instructions.
