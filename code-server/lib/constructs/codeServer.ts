@@ -33,6 +33,13 @@ export class Instance extends Construct {
       'Allow access to code-server'
     );
 
+    // 8501ポートを全体に開放（ワークショップ用）
+    this.securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(8501),
+      'Allow access to streamlit on code-server'
+    );
+
     // SSH用の22番ポートを開放（管理用）
     if (props.config.whiteList && props.config.whiteList.length > 0) {
       props.config.whiteList.forEach((ip) => {

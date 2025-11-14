@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo apt update
-sudo apt install -y pwgen jq curl unzip
+sudo apt install -y pwgen jq curl zip unzip
 
 # AWS CLI v2のインストール
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -28,8 +28,13 @@ sudo rm -rf amazon-q.deb
 # 依存関係の修復(2025/10/09から、何故かqが壊れて後続処理がコケている)
 apt --fix-broken install -y
 
-# Python3とNode.jsのインストール
-sudo apt install -y python3 python3-pip nodejs npm
+# Python3のインストール
+sudo apt install -y python3 python3-pip
+
+# Node.jsのインストール
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt update
+sudo apt install nodejs
 
 # code-sererの最新バージョンを取得
 CODER_VERSION=$(curl -s https://api.github.com/repos/coder/code-server/releases/latest | jq -r .tag_name | sed 's/v//')

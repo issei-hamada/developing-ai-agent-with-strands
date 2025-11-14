@@ -138,6 +138,8 @@ export class InstanceRole extends Construct {
       actions: [
         's3:GetObject',
         's3:PutObject',
+        's3:DeleteObject',
+        's3:ListBucketVersions',
         's3:ListBucket',
         's3:CreateBucket',
         's3:PutLifecycleConfiguration'

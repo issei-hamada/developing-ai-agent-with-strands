@@ -16,7 +16,7 @@ export const instanceConfig = {
     blockDevices: [
       {
         // ルートボリューム
-        deviceName: '/dev/xvda',
+        deviceName: '/dev/sda1',
         volume: ec2.BlockDeviceVolume.ebs(20, {
           volumeType: ec2.EbsDeviceVolumeType.GP3,
           deleteOnTermination: true,
@@ -37,7 +37,7 @@ export const instanceConfig = {
     blockDevices: [
       {
         // ルートボリューム
-        deviceName: '/dev/xvda',
+        deviceName: '/dev/sda1',
         volume: ec2.BlockDeviceVolume.ebs(20, {
           volumeType: ec2.EbsDeviceVolumeType.GP3,
           deleteOnTermination: true,

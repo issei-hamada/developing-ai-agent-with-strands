@@ -174,6 +174,24 @@ curl 実行側のターミナルに、レスポンスが返ってくるはず。
 
 ### config ファイルを作成する
 
+ターミナルで以下コマンドを実行し、AWS アカウント ID を控える。
+
+```bash
+aws sts get-caller-identity
+```
+
+**レスポンス:**
+
+```json
+{
+    "UserId": "AIDA3L7MCxxxxxxxxxxxx",
+    "Account": "xxxxxxxxxxxx",
+    "Arn": "arn:aws:iam::xxxxxxxxxxxx:user/issei.hamada"
+}
+```
+
+後で利用する為、Account の値を控えておく。
+
 以下コマンドを実行し、必要な設定ファイルを作成する。
 
 ※ エージェント名は重複出来ない
@@ -183,34 +201,67 @@ agentcore configure -e weather_reporter_xxxxxx.py
 
 # 対話式で各種リソースを作成する(今回は全てデフォルトでOK)
 Configuring Bedrock AgentCore...
-Entrypoint parsed: file=/home/ubuntu/sample-agent/weather_reporter_xxxxxx.py, bedrock_agentcore_name=weather_reporter_xxxxxx.py
-Agent name: weather_reporter_xxxxxx.py
+✓ Using file: weather_reporter.py
 
-🔐 Execution Role
-Press Enter to auto-create execution role, or provide execution role ARN/name to use existing
-Execution role ARN/name (or press Enter to auto-create): # ロール名
-
-🏗️  ECR Repository
-Press Enter to auto-create ECR repository, or provide ECR Repository URI to use existing
-ECR Repository URI (or press Enter to auto-create): # ECR リポジトリ名
-
+# 依存関係の解決に使うファイル名を入力
 🔍 Detected dependency file: pyproject.toml
 Press Enter to use this file, or type a different path (use Tab for autocomplete):
-Path or Press Enter to use detected dependency file: # Python の依存関係ファイル
+Path or Press Enter to use detected dependency file: pyproject.toml
+✓ Using requirements file: pyproject.toml
 
+# デプロイ設定(2025/11に、直接 Python コードを利用出来るようになった)
+🚀 Deployment Configuration
+Select deployment type:
+  1. Direct Code Deploy (recommended) - Python only, no Docker required
+  2. Container - For custom runtimes or complex dependencies
+Choice [1]: 1
+
+Select Python runtime version:
+  1. PYTHON_3_10
+  2. PYTHON_3_11
+  3. PYTHON_3_12
+  4. PYTHON_3_13
+Choice [3]: 3
+✓ Deployment type: Direct Code Deploy (python.3.12)
+
+# 実行ロールを指定: agentcore-execution-role
+🔐 Execution Role
+Press Enter to auto-create execution role, or provide execution role ARN/name to use existing
+Execution role ARN/name (or press Enter to auto-create): agentcore-execution-role
+✓ Will auto-create execution role
+
+# S3 バケット作成: 
+# 次の xxx を AWS アカウント ID で置き換えて入力
+# agentcore-deployment-bucket-xxxxxxxxxxxx
+🏗️  S3 Bucket
+Press Enter to auto-create S3 bucket, or provide S3 URI/path to use existing
+S3 URI/path (or press Enter to auto-create): agentcore-deployment-bucket-xxxxxxxxxxxx
+
+# AgentCore の認証に OAuth を使うか
 🔐 Authorization Configuration
 By default, Bedrock AgentCore uses IAM authorization.
-Configure OAuth authorizer instead? (yes/no) [no]: # AgentCore の認証に OAuth を使うか
+Configure OAuth authorizer instead? (yes/no) [no]:
+✓ Using default IAM authorization
 
+# リクエストヘッダーにホワイトリストを使うか
 🔒 Request Header Allowlist
 Configure which request headers are allowed to pass through to your agent.
 Common headers: Authorization, X-Amzn-Bedrock-AgentCore-Runtime-Custom-*
-Configure request header allowlist? (yes/no) [no]: # リクエストヘッダーの許可リスト設定
+Configure request header allowlist? (yes/no) [no]:
+✓ Using default request header configuration
+Configuring BedrockAgentCore agent: weather_reporter_code_server_1
 
-🧠 Memory Configuration
+Memory Configuration
+Tip: Use --disable-memory flag to skip memory entirely
 
-🧠 Memory Configuration
-✓ Short-term memory is enabled by default
+✅ MemoryManager initialized for region: us-west-2
+
+Options:
+  • Enter a number to use existing memory
+  • Press Enter to create new memory
+  • Type 's' to skip memory setup
+Your choice:
+✓ Short-term memory will be enabled (default)
   • Stores conversations within sessions
   • Provides immediate context recall
 
@@ -218,9 +269,13 @@ Optional: Long-term memory
   • Extracts user preferences across sessions
   • Remembers facts and patterns
   • Creates session summaries
-  • Note: Takes 60-90 seconds to process
+  • Note: Takes 120-180 seconds to process
 
-Enable long-term memory extraction? (yes/no) [no]: # 長期記憶を使うかどうか
+Enable long-term memory? (yes/no) [no]:
+✓ Using short-term memory only
+Will create new memory with mode: STM_ONLY
+Memory configuration: Short-term memory only
+Network mode: PUBLIC
 ```
 
 全て入力すると、コンフィグファイルが作成され、保存される。

@@ -4,6 +4,8 @@ import { Vpc } from './constructs/vpc';
 import { Instance } from './constructs/codeServer';
 import { RocketChat } from './constructs/rocketChat';
 import { InstanceRole } from './constructs/instance-role';
+import { AgentCoreExecutionRole } from './constructs/agentcore-execution-role';
+import { AgentCoreDeploymentBucket } from './constructs/agentcore-deployment-bucket';
 
 import { vpcConfig } from './config/network';
 import { instanceConfig } from './config/instance';
@@ -16,6 +18,21 @@ export class WorkshopStack extends cdk.Stack {
 
     // ワークショップ用の共通IAMロールを作成
     const workshopRole = new InstanceRole(this, 'SharedWorkshopRole');
+
+    // AgentCore用の実行ロールを作成
+    const agentCoreRole = new AgentCoreExecutionRole(this, 'AgentCoreExecutionRole', {
+      roleName: 'agentcore-execution-role',
+      description: 'Role for Bedrock Agent Core with necessary permissions'
+    });
+
+    // AgentCore用のデプロイメントバケットを作成
+    const deploymentBucket = new AgentCoreDeploymentBucket(this, 'AgentCoreDeploymentBucket', {
+      bucketNamePrefix: 'agentcore-deployment-bucket',
+      versioned: false,
+      encrypted: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      autoDeleteObjects: false
+    });
 
     // 3台のcode-serverインスタンスを作成
     const instances: Instance[] = [];
