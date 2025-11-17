@@ -140,7 +140,7 @@ The app runs as a web server on port 8080, accepting POST requests to `/invocati
 ### Workshop Infrastructure (code-server/)
 
 AWS CDK stack that deploys multiple EC2 instances with code-server (web-based VS Code):
-- Default configuration: 3 instances (configurable in `lib/workshop-stack.ts:22`)
+- Default configuration: 3 instances (configurable in `lib/workshop-stack.ts:39`)
 - Each instance pre-configured with:
   - code-server (browser-based VS Code) on port 50443
   - Python 3 + uv package manager
@@ -152,6 +152,25 @@ AWS CDK stack that deploys multiple EC2 instances with code-server (web-based VS
 - Passwords: SSM Parameter Store at `/workshop/code-server/<instance-id>/password`
 - SSH keys: SSM Parameter Store at `/ec2/keypair/<key-pair-id>`
 - Used for hands-on workshop environments
+
+#### AgentCore Infrastructure
+
+The stack also provisions AgentCore-specific resources for workshop participants:
+
+- **AgentCore Execution Role** (`agentcore-execution-role`): IAM role with permissions for:
+  - ECR image access (pull container images)
+  - CloudWatch Logs (create/write logs to `/aws/bedrock-agentcore/runtimes/*`)
+  - X-Ray tracing
+  - CloudWatch Metrics (publish to `bedrock-agentcore` namespace)
+  - Bedrock model invocation (all foundation models)
+  - AgentCore workload identity tokens
+
+- **AgentCore Deployment Bucket**: S3 bucket for storing agent deployment artifacts
+  - Naming pattern: `agentcore-deployment-bucket-{accountId}`
+  - Encrypted with S3-managed encryption
+  - Public access blocked
+  - SSL/TLS required for all requests
+  - Default removal policy: DESTROY (for easy workshop cleanup)
 
 ## Important Implementation Details
 
@@ -211,10 +230,12 @@ Include these elements in system prompts:
 │   └── weather_forecast.py        # JMA weather API tool
 └── code-server/                   # Workshop infrastructure (CDK)
     ├── lib/constructs/            # CDK constructs
-    │   ├── vpc.ts                # VPC setup
-    │   ├── codeServer.ts         # EC2 instance with code-server
-    │   ├── instance-role.ts      # IAM role with workshop permissions
-    │   └── rocketChat.ts         # Optional Rocket.Chat instance
+    │   ├── vpc.ts                         # VPC setup
+    │   ├── codeServer.ts                  # EC2 instance with code-server
+    │   ├── instance-role.ts               # IAM role with workshop permissions
+    │   ├── agentcore-execution-role.ts    # IAM role for AgentCore execution
+    │   ├── agentcore-deployment-bucket.ts # S3 bucket for AgentCore deployments
+    │   └── rocketChat.ts                  # Optional Rocket.Chat instance
     ├── lib/config/                # Configuration
     │   ├── network.ts            # VPC/network settings
     │   └── instance.ts           # EC2 instance settings
@@ -293,7 +314,7 @@ system_prompt = BASE_PROMPT + f"""
 
 ### Adjusting Number of EC2 Instances
 
-Edit `code-server/lib/workshop-stack.ts:22`:
+Edit `code-server/lib/workshop-stack.ts:39`:
 
 ```typescript
 for (let i = 1; i <= 10; i++) {  // Change 3 to desired number
@@ -308,9 +329,34 @@ Edit `code-server/lib/constructs/instance-role.ts` to add/remove IAM policies ba
 - SAM/CloudFormation deployments
 - Lambda, ECR, S3, SSM, CodeBuild
 
+### Customizing AgentCore Infrastructure
+
+#### Changing S3 Bucket Removal Policy
+
+Edit `code-server/lib/workshop-stack.ts:33` to change how the deployment bucket is handled on stack deletion:
+
+```typescript
+removalPolicy: cdk.RemovalPolicy.RETAIN,  // Keep bucket after stack deletion
+// or
+removalPolicy: cdk.RemovalPolicy.DESTROY, // Delete bucket after stack deletion (default)
+```
+
+For production use, set to `RETAIN` to preserve deployment artifacts. For workshops, `DESTROY` simplifies cleanup.
+
+#### Modifying AgentCore Execution Role Permissions
+
+Edit `code-server/lib/constructs/agentcore-execution-role.ts` to add/remove permissions for AgentCore agents. The role currently includes:
+
+- ECR: Pull container images from account repositories
+- CloudWatch Logs: Create log groups and streams, write logs
+- X-Ray: Trace agent execution
+- CloudWatch Metrics: Publish custom metrics
+- Bedrock: Invoke foundation models and custom models
+- AgentCore: Access workload identity tokens
+
 ### Enabling Rocket.Chat (Optional)
 
-Uncomment lines in `code-server/lib/workshop-stack.ts:34-39` and redeploy:
+Uncomment lines in `code-server/lib/workshop-stack.ts:51-56` and redeploy:
 
 ```typescript
 const rocketChat = new RocketChat(this, 'RocketChat', {

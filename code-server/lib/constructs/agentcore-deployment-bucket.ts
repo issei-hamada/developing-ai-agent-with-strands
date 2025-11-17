@@ -53,7 +53,7 @@ export class AgentCoreDeploymentBucket extends Construct {
     super(scope, id);
 
     const accountId = cdk.Stack.of(this).account;
-    const bucketNamePrefix = props?.bucketNamePrefix ?? 'agentcore-deployment-bucket';
+    const bucketNamePrefix = props?.bucketNamePrefix ?? 'bedrock-agentcore-deployment-bucket';
     const bucketName = `${bucketNamePrefix}-${accountId}`;
 
     // Create the S3 bucket
@@ -64,7 +64,7 @@ export class AgentCoreDeploymentBucket extends Construct {
         ? s3.BucketEncryption.S3_MANAGED
         : s3.BucketEncryption.UNENCRYPTED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: props?.removalPolicy ?? cdk.RemovalPolicy.RETAIN,
+      removalPolicy: props?.removalPolicy ?? cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: props?.autoDeleteObjects ?? false,
       lifecycleRules: props?.lifecycleRules,
       enforceSSL: true, // Require SSL/TLS for all requests

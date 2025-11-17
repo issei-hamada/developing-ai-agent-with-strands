@@ -123,7 +123,7 @@ def invoke_agent(payload):
 
     session_manager = FileSessionManager(
         session_id=payload.get("sessionId"),
-        storage_dir=".sessions"
+        storage_dir="/tmp/.sessions"
     )
 
     bedrock_model = BedrockModel(
